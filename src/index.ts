@@ -97,25 +97,31 @@ function literalOfConfig(config: Decode.Config) {
    * Decoder factory for literal types. Using a factory so we
    * can provide the expected literal / type.
    */
-  return function literalOf<T extends boolean | number | string>(literal: T) {
-    return (raw: any): T => {
-      if (raw !== literal) {
-        config.errorCallback(error('Literal', `${typeof literal}:${literal}`, `${typeof raw}:${raw}`));
+  function literal<T extends boolean | number | string>(literalValue: T): Decode.Decoder<T>;
+  function literal<T extends boolean | number | string, D>(literalValue: T, defaultValue: D): Decode.Decoder<T | D>;
+  function literal<T extends boolean | number | string, D>(literalValue: T, defaultValue?: T | D) {
+    const hasDefault = arguments.length === 2;
+    return function decodeLiteral(raw: any) {
+      if (raw !== literalValue) {
+        if (!hasDefault) {
+          config.errorCallback(error('Literal', `${typeof literalValue}:${literalValue}`, `${typeof raw}:${raw}`));
+        }
+        return defaultValue;
       }
 
       return raw;
     };
-  };
+  }
+
+  return literal;
 }
 
-function numberConfig(config: Decode.Config): Decode.Decoder<number> {
-  return function number(raw: any): number {
-    if (isNaN(Number(String(raw)))) {
-      config.errorCallback(error('Number', 'a number', raw));
-    }
-
-    return Number(raw);
-  };
+function numberConfig(config: Decode.Config) {
+  return createDecoderConfig(config)({
+    errorMsg: raw => `Number Decoder: Expected raw value to be a number but got: ${raw}.`,
+    isValid: raw => !isNaN(Number(String(raw))),
+    parse: raw => Number(raw),
+  });
 }
 
 function objectConfig(config: Decode.Config) {

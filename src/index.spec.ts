@@ -112,8 +112,13 @@ describe('literalOf', () => {
   it('should decode a literal to itself', () => {
     [1, true, false, 'value'].forEach(literal => {
       const decoder = Decode.literalOf(literal);
+      const decoderWithDefault = Decode.literalOf(literal, undefined);
+
       const result = decoder(literal);
+      const resultWithDefault = decoderWithDefault(literal);
+
       expect(result).toStrictEqual(literal);
+      expect(resultWithDefault).toStrictEqual(literal);
     });
   });
 
@@ -123,12 +128,21 @@ describe('literalOf', () => {
     const expected = `Literal Decoder: Expected raw value to be string:1 but got: number:${invalid}.`;
     expect(() => decoder(invalid)).toThrow(expected);
   });
+
+  it('should return given default if raw is not the literal', () => {
+    const decoder = Decode.literalOf('1', undefined);
+    const invalid = 1;
+    const result = decoder(invalid);
+    expect(result).toBeUndefined();
+  });
 });
 
 describe('number', () => {
+  const decode: Decode.Decoder<number> = Decode.number();
+
   it('should decode numbers', () => {
     [1, 2, 3, '1', '2', '3'].forEach(raw => {
-      const result = Decode.number(raw);
+      const result = decode(raw);
       expect(result).toStrictEqual(Number(raw));
     });
   });
@@ -136,14 +150,14 @@ describe('number', () => {
   it('should throw an error if raw is not numeric', () => {
     ['a', true, new Date(), {}, null, undefined].forEach(invalid => {
       const expected = `Number Decoder: Expected raw value to be a number but got: ${invalid}`;
-      expect(() => Decode.number(invalid)).toThrow(expected);
+      expect(() => decode(invalid)).toThrow(expected);
     });
   });
 });
 
 describe('object', () => {
   it('should decode objects with property type decoders', () => {
-    const numberDecoderSpy: typeof Decode.number = jest.fn(Decode.number);
+    const numberDecoderSpy: Decode.Decoder<number> = jest.fn(Decode.number());
     const stringDecoderSpy: typeof Decode.string = jest.fn(Decode.string);
 
     const raw = {
