@@ -10,17 +10,49 @@ function arrayConfig(config: Decode.Config) {
    * Array decoder factory. Takes a decoder for its
    * item type as a parameter.
    */
-  return function array<T>(decoder: Decode.Decoder<T>) {
-    function decodeArray(raw: Array<any>): Array<T> {
+  function array<
+    A extends [Decode.Decoder<any>] | [Decode.Decoder<any>, any]
+  >(...args: A) {
+    type T = A[0] extends Decode.Decoder<infer U> ? U : never;
+
+    type R =
+      A extends [Decode.Decoder<T>] ? Array<T> :
+      A extends [Decode.Decoder<T>, infer U] ? Array<T> | U :
+      never;
+
+    const decoder: Decode.Decoder<T> = args[0];
+
+    return function decodeArray(raw: Array<any>): R {
       if (!Array.isArray(raw)) {
-        config.errorCallback(error('Array', 'an array', raw));
+        if(args.length !== 2) {
+          config.errorCallback(error('Array', 'an array', raw));
+        }
+        return args[1];
       }
 
-      return raw.map(decoder);
+      return raw.map(decoder) as R;
     };
+  }
 
-    return decodeArray;
-  };
+  return array;
+
+  // function array<T, R extends Decode.Decoder<Array<T>>>(decoder: Decode.Decoder<T>): R;
+  // function array<T, R extends Decode.Decoder<Array<T> | Array<T> | undefined>>(decoder: Decode.Decoder<T>, defaultValue: Array<T> | undefined): R;
+  // function array<T, R extends Decode.Decoder<Array<T> | Array<T> | undefined>>(decoder: Decode.Decoder<T>, defaultValue?: Array<T> | undefined) {
+  //   const hasDefault = arguments.length === 2;
+  //   return function decodeArray(raw: Array<any>): R {
+  //     if (!Array.isArray(raw)) {
+  //       if(!hasDefault) {
+  //         config.errorCallback(error('Array', 'an array', raw));
+  //       }
+  //       return defaultValue;
+  //     }
+
+  //     return raw.map(decoder);
+  //   };
+  // };
+
+  // return array;
 }
 
 function booleanConfig(config: Decode.Config): Decode.Decoder<boolean> {
