@@ -42,7 +42,7 @@ describe('boolean', () => {
   let decode = Decode.boolean();
   let decodeWithDefault = Decode.boolean(undefined);
 
-  [decode, decodeWithDefault].forEach((decoder) => {
+  [decode, decodeWithDefault].forEach(decoder => {
     it('should decode truthy values to true', () => {
       [true, 'true', 1, '1'].forEach(raw => {
         expect(decoder(raw)).toStrictEqual(true);
@@ -136,22 +136,22 @@ describe('object', () => {
 
     const raw = {
       AAA: '999',
-      BBB: 'some string'
+      BBB: 'some string',
     };
 
     const decoder = Decode.object({
       aaa: ['AAA', numberDecoderSpy],
-      bbb: ['BBB', stringDecoderSpy]
+      bbb: ['BBB', stringDecoderSpy],
     });
 
     const result: {
-      aaa: number,
-      bbb: string
+      aaa: number;
+      bbb: string;
     } = decoder(raw);
 
     expect(result).toEqual({
       aaa: 999,
-      bbb: 'some string'
+      bbb: 'some string',
     });
 
     expect(numberDecoderSpy).toHaveBeenCalledWith(raw.AAA);

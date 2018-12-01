@@ -19,7 +19,7 @@ function arrayConfig(config: Decode.Config) {
     const hasDefault = arguments.length === 2;
     return function decodeArray(raw: Array<any>) {
       if (!Array.isArray(raw)) {
-        if(!hasDefault) {
+        if (!hasDefault) {
           config.errorCallback(error('Array', 'an array', raw));
         }
         return defaultValue;
@@ -27,41 +27,62 @@ function arrayConfig(config: Decode.Config) {
 
       return raw.map(decoder);
     };
-  };
+  }
 
   return array;
 }
 
-function booleanConfig(config: Decode.Config) {
-  function boolean(): Decode.Decoder<boolean>;
-  function boolean<D>(defaultValue: boolean | D): Decode.Decoder<boolean | D>;
-  function boolean<D>(defaultValue?: boolean | D) {
-    const hasDefault = arguments.length === 1;
-    return function decodeBoolean(raw: any) {
-      if(['true', 'false', '1', '0', 'null', 'undefined'].indexOf(String(raw)) < 0) {
-        if(!hasDefault) {
-          config.errorCallback(error('Boolean', 'a boolean', raw));
+function createDecoderConfig(config: Decode.Config) {
+  /**
+   * Create a decoder using existing config.
+   */
+  return function createDecoder<T>({
+    errorMsg,
+    isValid,
+    parse,
+  }: {
+    errorMsg: (raw: any) => string;
+    isValid: (raw: any) => boolean;
+    parse: (raw: any) => T;
+  }) {
+    function decoder(): Decode.Decoder<T>;
+    function decoder<D>(defaultValue: T | D): Decode.Decoder<T | D>;
+    function decoder<D>(defaultValue?: T | D) {
+      const hasDefault = arguments.length === 1;
+      return function decode(raw: any) {
+        if (!isValid(raw)) {
+          if (!hasDefault) {
+            config.errorCallback(new Error(errorMsg(raw)));
+          }
+
+          return defaultValue;
         }
 
-        return defaultValue;
-      }
+        return parse(raw);
+      };
+    }
 
-      return raw === true || raw === 'true' || Number(raw) === 1;
-    };
-  }
+    return decoder;
+  };
+}
 
-  return boolean;
+function booleanConfig(config: Decode.Config) {
+  return createDecoderConfig(config)({
+    errorMsg: raw => `Boolean Decoder: Expected raw value to be a boolean but got: ${raw}.`,
+    isValid: raw => ['true', 'false', '1', '0', 'null', 'undefined'].indexOf(String(raw)) > -1,
+    parse: raw => raw === true || raw === 'true' || Number(raw) === 1,
+  });
 }
 
 function dateConfig(config: Decode.Config): Decode.Decoder<Date> {
   return function date(raw = ''): Date {
     const isoDateStr = /^(\d{4})-(\d{2})-(\d{2})([ T](\d{2}:\d{2}:\d{2}Z?)?)?$/;
     const match = String(raw).match(isoDateStr);
-    if(!match) {
+    if (!match) {
       config.errorCallback(error('Date', 'an ISO date string', raw));
     }
 
-    if(match) {
+    if (match) {
       return new Date(+match[1], +match[2] - 1, +match[3]);
     }
 
@@ -76,7 +97,7 @@ function literalOfConfig(config: Decode.Config) {
    */
   return function literalOf<T extends boolean | number | string>(literal: T) {
     return (raw: any): T => {
-      if(raw !== literal) {
+      if (raw !== literal) {
         config.errorCallback(error('Literal', `${typeof literal}:${literal}`, `${typeof raw}:${raw}`));
       }
 
@@ -87,7 +108,7 @@ function literalOfConfig(config: Decode.Config) {
 
 function numberConfig(config: Decode.Config): Decode.Decoder<number> {
   return function number(raw: any): number {
-    if(isNaN(Number(String(raw)))) {
+    if (isNaN(Number(String(raw)))) {
       config.errorCallback(error('Number', 'a number', raw));
     }
 
@@ -138,6 +159,7 @@ function configure(
     string: stringConfig(config),
 
     config: configure,
+    createDecoder: createDecoderConfig(config),
   };
 }
 
@@ -192,6 +214,11 @@ interface Decode {
    * Configure a new set of decoder functions.
    */
   config: typeof configure;
+
+  /**
+   * Create a new decoder.
+   */
+  createDecoder: ReturnType<typeof createDecoderConfig>;
 }
 
 const Decode = configure();
