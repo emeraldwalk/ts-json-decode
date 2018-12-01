@@ -1,151 +1,178 @@
-interface Decoder<T> {
-	(raw: any): T;
-}
-
-interface Config {
-	errorCallback: (error: Error) => void;
+function error(decoderType: string, expect: string, raw: any) {
+  return new Error(`${decoderType} Decoder: Expected raw value to be ${expect} but got: ${raw}.`);
 }
 
 /**
  * Configure an array decoder.
  */
-function arrayConfig(config: Config) {
-	/**
-	 * Array decoder.
-	 */
-	return function array<T>(
-		decoder: Decoder<T>
-	) {
-		return (raw: Array<any>): Array<T> => {
-			return raw.map(decoder);
-		};
-	}
+function arrayConfig(config: Decode.Config) {
+  /**
+   * Array decoder factory. Takes a decoder for its
+   * item type as a parameter.
+   */
+  return function array<T>(decoder: Decode.Decoder<T>) {
+    function decodeArray(raw: Array<any>): Array<T> {
+      if (!Array.isArray(raw)) {
+        config.errorCallback(error('Array', 'an array', raw));
+      }
+
+      return raw.map(decoder);
+    };
+
+    return decodeArray;
+  };
 }
 
-function booleanConfig(config: Config): Decoder<boolean> {
-	return function boolean(
-		raw: any
-	): boolean {
-		return raw === true || raw === 'true' || Number(raw) === 1;
-	}
+function booleanConfig(config: Decode.Config): Decode.Decoder<boolean> {
+  return function boolean(raw: any): boolean {
+    if(['true', 'false', '1', '0', 'null', 'undefined'].indexOf(String(raw)) < 0) {
+      config.errorCallback(error('Boolean', 'a boolean', raw));
+    }
+
+    return raw === true || raw === 'true' || Number(raw) === 1;
+  };
 }
 
-function dateConfig(config: Config): Decoder<Date> {
-	return function date(
-		raw = ''
-	): Date {
-		const [year, month, day] = String(raw).substr(0, 10).split('-');
-		return new Date(+year, +month + 1, +day);
-	}
+function dateConfig(config: Decode.Config): Decode.Decoder<Date> {
+  return function date(raw = ''): Date {
+    const isoDateStr = /^(\d{4})-(\d{2})-(\d{2})([ T](\d{2}:\d{2}:\d{2}Z?)?)?$/;
+    const match = String(raw).match(isoDateStr);
+    if(!match) {
+      config.errorCallback(error('Date', 'an ISO date string', raw));
+    }
+
+    if(match) {
+      return new Date(+match[1], +match[2] - 1, +match[3]);
+    }
+
+    return new Date();
+  };
 }
 
-function literalOfConfig(config: Config) {
-	/**
-	 * Decoder factory for literal types. Using a factory so we
-	 * can provide the expected literal / type.
-	 */
-	return function literalOf<T extends boolean | number | string>(
-		literal: T
-	) {
-		return (raw: any): T => {
-			return raw;
-		}
-	}
+function literalOfConfig(config: Decode.Config) {
+  /**
+   * Decoder factory for literal types. Using a factory so we
+   * can provide the expected literal / type.
+   */
+  return function literalOf<T extends boolean | number | string>(literal: T) {
+    return (raw: any): T => {
+      if(raw !== literal) {
+        config.errorCallback(error('Literal', `${typeof literal}:${literal}`, `${typeof raw}:${raw}`));
+      }
+
+      return raw;
+    };
+  };
 }
 
-function numberConfig(config: Config): Decoder<number> {
-	return function number(
-		raw: any
-	): number {
-		return Number(raw);
-	}
+function numberConfig(config: Decode.Config): Decode.Decoder<number> {
+  return function number(raw: any): number {
+    if(isNaN(Number(String(raw)))) {
+      config.errorCallback(error('Number', 'a number', raw));
+    }
+
+    return Number(raw);
+  };
 }
 
-function objectConfig(config: Config) {
-	return function object<T, K extends string>(
-		map: { [P in keyof T]: [K, Decoder<T[P]>] }
-	) {
-		return (raw: any): T => {
-			return Object.keys(map).reduce((acc: any, key: string) => {
-				const [rawKey, decoder] = map[key as keyof T];
-				return {
-					...acc,
-					[key]: decoder(raw[rawKey])
-				}
-			}, {} as T);
-		};
-	}
+function objectConfig(config: Decode.Config) {
+  return function object<T, K extends string>(map: { [P in keyof T]: [K, Decode.Decoder<T[P]>] }) {
+    return (raw: any): T => {
+      return Object.keys(map).reduce(
+        (acc: any, key: string) => {
+          const [rawKey, decoder] = map[key as keyof T];
+          return {
+            ...acc,
+            [key]: decoder(raw[rawKey]),
+          };
+        },
+        {} as T,
+      );
+    };
+  };
 }
 
-function stringConfig(config: Config): Decoder<string> {
-	return function string(
-		raw: any
-	): string {
-		return String(raw);
-	}
+function stringConfig(config: Decode.Config): Decode.Decoder<string> {
+  return function string(raw: any): string {
+    return String(raw);
+  };
 }
 
 interface Decode {
-	/**
-	 * Array decoder.
-	 */
-	array: ReturnType<typeof arrayConfig>,
+  /**
+   * Array decoder.
+   */
+  array: ReturnType<typeof arrayConfig>;
 
-	/**
-	 * Boolean decoder.
-	 */
-	boolean: ReturnType<typeof booleanConfig>,
+  /**
+   * Boolean decoder.
+   */
+  boolean: ReturnType<typeof booleanConfig>;
 
-	/**
-	 * Date decoder.
-	 */
-	date: ReturnType<typeof dateConfig>,
+  /**
+   * Date decoder.
+   */
+  date: ReturnType<typeof dateConfig>;
 
-	/**
-	 * Decoder factory for literal types. Using a factory so we
-	 * can provide the expected literal / type.
-	 */
-	literalOf: ReturnType<typeof literalOfConfig>,
+  /**
+   * Decoder factory for literal types. Using a factory so we
+   * can provide the expected literal / type.
+   */
+  literalOf: ReturnType<typeof literalOfConfig>;
 
-	/**
-	 * Number decoder.
-	 */
-	number: ReturnType<typeof numberConfig>,
+  /**
+   * Number decoder.
+   */
+  number: ReturnType<typeof numberConfig>;
 
-	/**
-	 * Object decoder.
-	 */
-	object: ReturnType<typeof objectConfig>,
+  /**
+   * Object decoder.
+   */
+  object: ReturnType<typeof objectConfig>;
 
-	/**
-	 * String decoder.
-	 */
-	string: ReturnType<typeof stringConfig>,
+  /**
+   * String decoder.
+   */
+  string: ReturnType<typeof stringConfig>;
 
-	/**
-	 * Configure a new set of decoder functions.
-	 */
-	config: typeof configure
+  /**
+   * Configure a new set of decoder functions.
+   */
+  config: typeof configure;
 }
 
 /**
  * Configures a set of decoders.
  */
-function configure(config: Config = {
-	errorCallback: error => console.log(error)
-}): Decode {
-	return {
-		array: arrayConfig(config),
-		boolean: booleanConfig(config),
-		date: dateConfig(config),
-		literalOf: literalOfConfig(config),
-		number: numberConfig(config),
-		object: objectConfig(config),
-		string: stringConfig(config),
+function configure(
+  config: Decode.Config = {
+    errorCallback: error => {
+      throw error;
+    },
+  },
+): Decode {
+  return {
+    array: arrayConfig(config),
+    boolean: booleanConfig(config),
+    date: dateConfig(config),
+    literalOf: literalOfConfig(config),
+    number: numberConfig(config),
+    object: objectConfig(config),
+    string: stringConfig(config),
 
-		config: configure
-	};
-};
+    config: configure,
+  };
+}
+
+namespace Decode {
+  export interface Decoder<T> {
+    (raw: any): T;
+  }
+
+  export interface Config {
+    errorCallback: (error: Error) => void;
+  }
+}
 
 const Decode = configure();
 

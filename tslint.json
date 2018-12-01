@@ -1,3 +1,8 @@
 {
-  "extends": ["tslint:recommended", "tslint-config-prettier"]
+  "extends": ["tslint:recommended", "tslint-config-prettier"],
+  "rules": {
+    "array-type": [true, "generic"],
+    "callable-types": false,
+    "interface-name" : [true, "never-prefix"]
+  }
 }
