@@ -66,6 +66,7 @@ function createDecoderConfig(config: Decode.Config) {
   };
 }
 
+/** Configure a boolean decoder.s */
 function booleanConfig(config: Decode.Config) {
   return createDecoderConfig(config)({
     errorMsg: raw => `Boolean Decoder: Expected raw value to be a boolean but got: ${raw}.`,
@@ -74,20 +75,21 @@ function booleanConfig(config: Decode.Config) {
   });
 }
 
-function dateConfig(config: Decode.Config): Decode.Decoder<Date> {
-  return function date(raw = ''): Date {
-    const isoDateStr = /^(\d{4})-(\d{2})-(\d{2})([ T](\d{2}:\d{2}:\d{2}Z?)?)?$/;
-    const match = String(raw).match(isoDateStr);
-    if (!match) {
-      config.errorCallback(error('Date', 'an ISO date string', raw));
-    }
+function dateConfig(config: Decode.Config) {
+  const isoDateStr = /^(\d{4})-(\d{2})-(\d{2})([ T](\d{2}:\d{2}:\d{2}Z?)?)?$/;
+  return createDecoderConfig(config)({
+    errorMsg: raw => `Date Decoder: Expected raw value to be an ISO date string but got: ${raw}.`,
+    isValid: raw => isoDateStr.test(raw),
+    parse: raw => {
+      const match = String(raw).match(isoDateStr);
 
-    if (match) {
-      return new Date(+match[1], +match[2] - 1, +match[3]);
-    }
+      if (match) {
+        return new Date(+match[1], +match[2] - 1, +match[3]);
+      }
 
-    return new Date();
-  };
+      return new Date();
+    },
+  });
 }
 
 function literalOfConfig(config: Decode.Config) {

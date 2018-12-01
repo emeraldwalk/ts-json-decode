@@ -39,8 +39,8 @@ describe('array', () => {
 });
 
 describe('boolean', () => {
-  let decode = Decode.boolean();
-  let decodeWithDefault = Decode.boolean(undefined);
+  const decode = Decode.boolean();
+  const decodeWithDefault = Decode.boolean(undefined);
 
   [decode, decodeWithDefault].forEach(decoder => {
     it('should decode truthy values to true', () => {
@@ -70,28 +70,40 @@ describe('boolean', () => {
 });
 
 describe('date', () => {
-  it('should decode iso date strings to Dates', () => {
-    const dates = ['2018-02-15'];
-    const times = [' 00:00:00', 'T00:00:00'];
-    const suffixes = ['', 'Z'];
+  const decode: Decode.Decoder<Date> = Decode.date();
+  const decodeWithDefault: Decode.Decoder<Date | undefined> = Decode.date(undefined);
 
-    const expected = new Date(2018, 1, 15);
+  [decode, decodeWithDefault].forEach(decoder => {
+    it('should decode iso date strings to Dates', () => {
+      const dates = ['2018-02-15'];
+      const times = [' 00:00:00', 'T00:00:00'];
+      const suffixes = ['', 'Z'];
 
-    for (const date of dates) {
-      for (const time of times) {
-        for (const suffix of suffixes) {
-          const dateStr = `${date}${time}${suffix}`;
-          const result = Decode.date(dateStr);
-          expect(result).toEqual(expected);
+      const expected = new Date(2018, 1, 15);
+
+      for (const date of dates) {
+        for (const time of times) {
+          for (const suffix of suffixes) {
+            const dateStr = `${date}${time}${suffix}`;
+            const result = decoder(dateStr);
+            expect(result).toEqual(expected);
+          }
         }
       }
-    }
+    });
   });
 
   it('should throw an error if raw is not an ISO date str', () => {
     [999, 'xxxx', '20180911', '2018-0911', '2018-09-111'].forEach(invalid => {
       const expected = `Date Decoder: Expected raw value to be an ISO date string but got: ${invalid}.`;
-      expect(() => Decode.date(invalid)).toThrow(expected);
+      expect(() => decode(invalid)).toThrow(expected);
+    });
+  });
+
+  it('return given default if raw is not an ISO date str', () => {
+    [999, 'xxxx', '20180911', '2018-0911', '2018-09-111'].forEach(invalid => {
+      const result = decodeWithDefault(invalid);
+      expect(result).toBeUndefined();
     });
   });
 });
