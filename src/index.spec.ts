@@ -1,26 +1,37 @@
 import * as Decode from '.';
 
 describe('array', () => {
-  let mockItemDecoder: Decode.Decoder<'a'>;
+  let mockItemDecoder: jest.Mock<'a'>;
   let decoder: Decode.Decoder<Array<any>>;
+  let decoderWithDefault: Decode.Decoder<Array<any> | undefined>;
 
   beforeEach(() => {
-    mockItemDecoder = jest.fn().mockReturnValue('a');
+    mockItemDecoder = jest.fn<'a'>().mockReturnValue('a');
     decoder = Decode.array(mockItemDecoder);
+    decoderWithDefault = Decode.array(mockItemDecoder, undefined);
   });
 
   it('should decode an array using given item decoder', () => {
     const given = [1, 2, 3];
+    [decoder, decoderWithDefault].forEach(decode => {
+      mockItemDecoder.mockClear();
+      const result = decode(given);
 
-    const result = decoder(given);
-    expect(mockItemDecoder).toHaveBeenNthCalledWith(1, 1, 0, given);
-    expect(result).toEqual(['a', 'a', 'a']);
+      expect(mockItemDecoder).toHaveBeenNthCalledWith(1, 1, 0, given);
+      expect(result).toEqual(['a', 'a', 'a']);
+    });
   });
 
   it('should throw an error if raw is not an array', () => {
     const given = 'invalid';
     const expected = `Array Decoder: Expected raw value to be an array but got: ${given}.`;
     expect(() => decoder(given)).toThrow(expected);
+  });
+
+  it('should return given default value if raw is not an array', () => {
+    const given = 'invalid';
+    const result = decoderWithDefault(given);
+    expect(result).toBeUndefined();
   });
 });
 

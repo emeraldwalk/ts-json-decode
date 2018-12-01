@@ -1,3 +1,6 @@
+/**
+ * Create an Error object for when decoding fails.
+ */
 function error(decoderType: string, expect: string, raw: any) {
   return new Error(`${decoderType} Decoder: Expected raw value to be ${expect} but got: ${raw}.`);
 }
@@ -13,9 +16,10 @@ function arrayConfig(config: Decode.Config) {
   function array<T>(decoder: Decode.Decoder<T>): Decode.Decoder<Array<T>>;
   function array<T, D>(decoder: Decode.Decoder<T>, defaultValue: D): Decode.Decoder<Array<T> | D>;
   function array<T, D>(decoder: Decode.Decoder<T>, defaultValue?: Array<T> | D) {
+    const hasDefault = arguments.length === 2;
     return function decodeArray(raw: Array<any>) {
       if (!Array.isArray(raw)) {
-        if(arguments.length === 1) {
+        if(!hasDefault) {
           config.errorCallback(error('Array', 'an array', raw));
         }
         return defaultValue;
@@ -103,6 +107,39 @@ function stringConfig(config: Decode.Config): Decode.Decoder<string> {
   };
 }
 
+/**
+ * Configures a set of decoders.
+ */
+function configure(
+  config: Decode.Config = {
+    errorCallback: error => {
+      throw error;
+    },
+  },
+): Decode {
+  return {
+    array: arrayConfig(config),
+    boolean: booleanConfig(config),
+    date: dateConfig(config),
+    literalOf: literalOfConfig(config),
+    number: numberConfig(config),
+    object: objectConfig(config),
+    string: stringConfig(config),
+
+    config: configure,
+  };
+}
+
+namespace Decode {
+  export interface Decoder<T> {
+    (raw: any): T;
+  }
+
+  export interface Config {
+    errorCallback: (error: Error) => void;
+  }
+}
+
 interface Decode {
   /**
    * Array decoder.
@@ -146,50 +183,6 @@ interface Decode {
   config: typeof configure;
 }
 
-/**
- * Configures a set of decoders.
- */
-function configure(
-  config: Decode.Config = {
-    errorCallback: error => {
-      throw error;
-    },
-  },
-): Decode {
-  return {
-    array: arrayConfig(config),
-    boolean: booleanConfig(config),
-    date: dateConfig(config),
-    literalOf: literalOfConfig(config),
-    number: numberConfig(config),
-    object: objectConfig(config),
-    string: stringConfig(config),
-
-    config: configure,
-  };
-}
-
-namespace Decode {
-  export interface Decoder<T> {
-    (raw: any): T;
-  }
-
-  export interface Config {
-    errorCallback: (error: Error) => void;
-  }
-}
-
 const Decode = configure();
 
 export = Decode;
-
-// const person = object(
-// 	{
-// 		firstName: ['FIRSTNAME', string],
-// 		age: ['AGE', number],
-// 		child: ['CHILD', object({
-// 			name: ['NAME', string]
-// 		})],
-// 		children: ['CHILDREN', array(number)]
-// 	}
-// );
