@@ -32,14 +32,25 @@ function arrayConfig(config: Decode.Config) {
   return array;
 }
 
-function booleanConfig(config: Decode.Config): Decode.Decoder<boolean> {
-  return function boolean(raw: any): boolean {
-    if(['true', 'false', '1', '0', 'null', 'undefined'].indexOf(String(raw)) < 0) {
-      config.errorCallback(error('Boolean', 'a boolean', raw));
-    }
+function booleanConfig(config: Decode.Config) {
+  function boolean(): Decode.Decoder<boolean>;
+  function boolean<D>(defaultValue: boolean | D): Decode.Decoder<boolean | D>;
+  function boolean<D>(defaultValue?: boolean | D) {
+    const hasDefault = arguments.length === 1;
+    return function decodeBoolean(raw: any) {
+      if(['true', 'false', '1', '0', 'null', 'undefined'].indexOf(String(raw)) < 0) {
+        if(!hasDefault) {
+          config.errorCallback(error('Boolean', 'a boolean', raw));
+        }
 
-    return raw === true || raw === 'true' || Number(raw) === 1;
-  };
+        return defaultValue;
+      }
+
+      return raw === true || raw === 'true' || Number(raw) === 1;
+    };
+  }
+
+  return boolean;
 }
 
 function dateConfig(config: Decode.Config): Decode.Decoder<Date> {

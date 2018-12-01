@@ -1,57 +1,71 @@
 import * as Decode from '.';
 
 describe('array', () => {
-  let mockItemDecoder: jest.Mock<'a'>;
-  let decoder: Decode.Decoder<Array<any>>;
-  let decoderWithDefault: Decode.Decoder<Array<any> | undefined>;
+  const mockItemDecoder = jest.fn<'a'>().mockReturnValue('a');
+  const decode = Decode.array(mockItemDecoder);
+  const decodeWithDefault = Decode.array(mockItemDecoder, undefined);
 
   beforeEach(() => {
-    mockItemDecoder = jest.fn<'a'>().mockReturnValue('a');
-    decoder = Decode.array(mockItemDecoder);
-    decoderWithDefault = Decode.array(mockItemDecoder, undefined);
+    mockItemDecoder.mockClear();
   });
 
   it('should decode an array using given item decoder', () => {
     const given = [1, 2, 3];
-    [decoder, decoderWithDefault].forEach(decode => {
-      mockItemDecoder.mockClear();
-      const result = decode(given);
+    const result = decode(given);
 
-      expect(mockItemDecoder).toHaveBeenNthCalledWith(1, 1, 0, given);
-      expect(result).toEqual(['a', 'a', 'a']);
-    });
+    expect(mockItemDecoder).toHaveBeenNthCalledWith(1, 1, 0, given);
+    expect(result).toEqual(['a', 'a', 'a']);
+  });
+
+  it('should decode an array using given item decoder', () => {
+    const given = [1, 2, 3];
+    const result = decodeWithDefault(given);
+
+    expect(mockItemDecoder).toHaveBeenNthCalledWith(1, 1, 0, given);
+    expect(result).toEqual(['a', 'a', 'a']);
   });
 
   it('should throw an error if raw is not an array', () => {
     const given = 'invalid';
     const expected = `Array Decoder: Expected raw value to be an array but got: ${given}.`;
-    expect(() => decoder(given)).toThrow(expected);
+    expect(() => decode(given)).toThrow(expected);
   });
 
   it('should return given default value if raw is not an array', () => {
     const given = 'invalid';
-    const result = decoderWithDefault(given);
+    const result = decodeWithDefault(given);
     expect(result).toBeUndefined();
   });
 });
 
 describe('boolean', () => {
-  it('should decode truthy values to true', () => {
-    [true, 'true', 1, '1'].forEach(raw => {
-      expect(Decode.boolean(raw)).toStrictEqual(true);
-    });
-  });
+  let decode = Decode.boolean();
+  let decodeWithDefault = Decode.boolean(undefined);
 
-  it('should decode non-truthy values to false', () => {
-    [false, undefined, null, 0, '0'].forEach(raw => {
-      expect(Decode.boolean(raw)).toStrictEqual(false);
+  [decode, decodeWithDefault].forEach((decoder) => {
+    it('should decode truthy values to true', () => {
+      [true, 'true', 1, '1'].forEach(raw => {
+        expect(decoder(raw)).toStrictEqual(true);
+      });
+    });
+
+    it('should decode non-truthy values to false', () => {
+      [false, undefined, null, 0, '0'].forEach(raw => {
+        expect(decoder(raw)).toStrictEqual(false);
+      });
     });
   });
 
   it('should throw an error if raw is not a boolean', () => {
     const given = 999;
     const expected = `Boolean Decoder: Expected raw value to be a boolean but got: ${given}.`;
-    expect(() => Decode.boolean(given)).toThrow(expected);
+    expect(() => decode(given)).toThrow(expected);
+  });
+
+  it('should return given default if raw is not a boolean', () => {
+    const given = 999;
+    const result = decodeWithDefault(given);
+    expect(result).toBeUndefined();
   });
 });
 
@@ -63,9 +77,9 @@ describe('date', () => {
 
     const expected = new Date(2018, 1, 15);
 
-    for(const date of dates) {
-      for(const time of times) {
-        for(const suffix of suffixes) {
+    for (const date of dates) {
+      for (const time of times) {
+        for (const suffix of suffixes) {
           const dateStr = `${date}${time}${suffix}`;
           const result = Decode.date(dateStr);
           expect(result).toEqual(expected);
