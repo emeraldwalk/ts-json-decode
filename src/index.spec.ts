@@ -156,30 +156,62 @@ describe('number', () => {
 });
 
 describe('object', () => {
+  const numberDecoderSpy = jest.fn<number>(Decode.number());
+  const stringDecoderSpy = jest.fn<string>(Decode.string);
+
+  const decoder = Decode.object({
+    aaa: ['AAA', numberDecoderSpy],
+    bbb: ['BBB', stringDecoderSpy],
+  });
+
+  const decoderWithDefault = Decode.object({
+    aaa: ['AAA', numberDecoderSpy],
+    bbb: ['BBB', stringDecoderSpy],
+  }, undefined);
+
+  beforeEach(() => {
+    numberDecoderSpy.mockClear();
+    stringDecoderSpy.mockClear();
+  });
+
   it('should decode objects with property type decoders', () => {
-    const numberDecoderSpy: Decode.Decoder<number> = jest.fn(Decode.number());
-    const stringDecoderSpy: typeof Decode.string = jest.fn(Decode.string);
+    const expected = {
+      aaa: 999,
+      bbb: 'some string',
+    };
 
     const raw = {
       AAA: '999',
       BBB: 'some string',
     };
 
-    const decoder = Decode.object({
-      aaa: ['AAA', numberDecoderSpy],
-      bbb: ['BBB', stringDecoderSpy],
-    });
-
     const result: {
       aaa: number;
       bbb: string;
     } = decoder(raw);
 
-    expect(result).toEqual({
+    expect(result).toEqual(expected);
+    expect(numberDecoderSpy).toHaveBeenCalledWith(raw.AAA);
+    expect(stringDecoderSpy).toHaveBeenCalledWith(raw.BBB);
+  });
+
+  it('should decode objects with property type decoders when given default', () => {
+    const expected = {
       aaa: 999,
       bbb: 'some string',
-    });
+    };
 
+    const raw = {
+      AAA: '999',
+      BBB: 'some string',
+    };
+
+    const resultWithDefault: {
+      aaa: number;
+      bbb: string;
+    } | undefined = decoderWithDefault(raw);
+
+    expect(resultWithDefault).toEqual(expected);
     expect(numberDecoderSpy).toHaveBeenCalledWith(raw.AAA);
     expect(stringDecoderSpy).toHaveBeenCalledWith(raw.BBB);
   });

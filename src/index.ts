@@ -124,8 +124,14 @@ function numberConfig(config: Decode.Config) {
   });
 }
 
+// function array<T>(decoder: Decode.Decoder<T>): Decode.Decoder<Array<T>>;
+// function array<T, D>(decoder: Decode.Decoder<T>, defaultValue: D): Decode.Decoder<Array<T> | D>;
+// function array<T, D>(decoder: Decode.Decoder<T>, defaultValue?: Array<T> | D) {
+
 function objectConfig(config: Decode.Config) {
-  return function object<T, K extends string>(map: { [P in keyof T]: [K, Decode.Decoder<T[P]>] }) {
+  function object<T, K extends string>(map: { [P in keyof T]: [K, Decode.Decoder<T[P]>] }): Decode.Decoder<T>;
+  function object<T, K extends string, D>(map: { [P in keyof T]: [K, Decode.Decoder<T[P]>] }, defaultValue: D): Decode.Decoder<T | D>;
+  function object<T, K extends string, D>(map: { [P in keyof T]: [K, Decode.Decoder<T[P]>] }, defaultValue?: D) {
     return (raw: any): T => {
       return Object.keys(map).reduce(
         (acc: any, key: string) => {
@@ -139,6 +145,8 @@ function objectConfig(config: Decode.Config) {
       );
     };
   };
+
+  return object;
 }
 
 function stringConfig(config: Decode.Config): Decode.Decoder<string> {
