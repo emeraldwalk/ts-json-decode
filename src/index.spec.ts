@@ -6,7 +6,7 @@ describe('array', () => {
 
   beforeEach(() => {
     mockItemDecoder = jest.fn().mockReturnValue('a');
-    decoder = Decode.array(mockItemDecoder);
+    let decoder = Decode.array(mockItemDecoder);
   });
 
   it('should decode an array using given item decoder', () => {
