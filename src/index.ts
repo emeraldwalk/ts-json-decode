@@ -1,8 +1,12 @@
 /**
  * Create an Error object for when decoding fails.
  */
-function error(decoderType: string, expect: string, raw: any) {
+function error2(decoderType: string, expect: string, raw: any) {
   return new Error(`${decoderType} Decoder: Expected raw value to be ${expect} but got: ${raw}.`);
+}
+
+function errorFmt(decoderType: string, expected: string, raw: any) {
+  return `${decoderType} Decoder: Expected raw value to be ${expected} but got: ${raw}.`;
 }
 
 /**
@@ -10,8 +14,12 @@ function error(decoderType: string, expect: string, raw: any) {
  */
 function arrayConfig(config: Decode.Config) {
   /**
-   * Array decoder factory. Takes a decoder for its
-   * item type as a parameter.
+   * Array decoder.
+   *
+   * Decodes an array of raw values running a given item decoder against every item.
+   *
+   * @param decoder - json decoder that will be run on each item.
+   * @param defaultValue - optional default value if parse fails.
    */
   function array<T>(decoder: Decode.Decoder<T>): Decode.Decoder<Array<T>>;
   function array<T, D>(decoder: Decode.Decoder<T>, defaultValue: D): Decode.Decoder<Array<T> | D>;
@@ -20,7 +28,7 @@ function arrayConfig(config: Decode.Config) {
     return function decodeArray(raw: Array<any>) {
       if (!Array.isArray(raw)) {
         if (!hasDefault) {
-          config.errorCallback(error('Array', 'an array', raw));
+          config.errorCallback(new Error(errorFmt('Array', 'an array', raw)));
         }
         return defaultValue;
       }
@@ -69,7 +77,7 @@ function createDecoderConfig(config: Decode.Config) {
 /** Configure a boolean decoder.s */
 function booleanConfig(config: Decode.Config) {
   return createDecoderConfig(config)({
-    errorMsg: raw => `Boolean Decoder: Expected raw value to be a boolean but got: ${raw}.`,
+    errorMsg: raw => errorFmt('Boolean', 'a boolean', raw),
     isValid: raw => ['true', 'false', '1', '0', 'null', 'undefined'].indexOf(String(raw)) > -1,
     parse: raw => raw === true || raw === 'true' || Number(raw) === 1,
   });
@@ -78,7 +86,7 @@ function booleanConfig(config: Decode.Config) {
 function dateConfig(config: Decode.Config) {
   const isoDateStr = /^(\d{4})-(\d{2})-(\d{2})([ T](\d{2}:\d{2}:\d{2}Z?)?)?$/;
   return createDecoderConfig(config)({
-    errorMsg: raw => `Date Decoder: Expected raw value to be an ISO date string but got: ${raw}.`,
+    errorMsg: raw => errorFmt('Date', 'an ISO date string', raw),
     isValid: raw => isoDateStr.test(raw),
     parse: raw => {
       const match = String(raw).match(isoDateStr);
@@ -94,8 +102,13 @@ function dateConfig(config: Decode.Config) {
 
 function literalOfConfig(config: Decode.Config) {
   /**
-   * Decoder factory for literal types. Using a factory so we
-   * can provide the expected literal / type.
+   * Literal value decoder.
+   *
+   * Decodes a literal value from a raw value.
+   * Valid types can be boolean, number, or string.
+   *
+   * @param literalValue - literal value.
+   * @param defaultValue - optional default value if parse fails.
    */
   function literal<T extends boolean | number | string>(literalValue: T): Decode.Decoder<T>;
   function literal<T extends boolean | number | string, D>(literalValue: T, defaultValue: D): Decode.Decoder<T | D>;
@@ -104,7 +117,7 @@ function literalOfConfig(config: Decode.Config) {
     return function decodeLiteral(raw: any) {
       if (raw !== literalValue) {
         if (!hasDefault) {
-          config.errorCallback(error('Literal', `${typeof literalValue}:${literalValue}`, `${typeof raw}:${raw}`));
+          config.errorCallback(new Error(errorFmt('Literal', `${typeof literalValue}:${literalValue}`, `${typeof raw}:${raw}`)));
         }
         return defaultValue;
       }
@@ -118,7 +131,7 @@ function literalOfConfig(config: Decode.Config) {
 
 function numberConfig(config: Decode.Config) {
   return createDecoderConfig(config)({
-    errorMsg: raw => `Number Decoder: Expected raw value to be a number but got: ${raw}.`,
+    errorMsg: raw => errorFmt('Number', 'a number', raw),
     isValid: raw => !isNaN(Number(String(raw))),
     parse: raw => Number(raw),
   });
@@ -147,7 +160,7 @@ function objectConfig(config: Decode.Config) {
 
 function stringConfig(config: Decode.Config) {
   return createDecoderConfig(config)({
-    errorMsg: raw => `String Decoder: Expected raw value to be a string but got: ${raw}.`,
+    errorMsg: raw => errorFmt('String', 'a string', raw),
     isValid: raw => ['boolean', 'number', 'string'].indexOf(typeof raw) > -1,
     parse: raw => String(raw),
   });
@@ -191,27 +204,53 @@ namespace Decode {
 interface Decode {
   /**
    * Array decoder.
+   *
+   * Decodes an array of raw values running a given item decoder against every item.
+   *
+   * @param decoder - json decoder that will be run on each item.
+   * @param defaultValue - optional default value if parse fails.
    */
   array: ReturnType<typeof arrayConfig>;
 
   /**
    * Boolean decoder.
+   *
+   * Valid raw values that will be converted to boolean values:
+   *
+   * truthy: true, false, 1, 'true', 'false', '1'
+   *
+   * falsy: 0, null, undefined, '0', 'null', 'undefined'
+   *
+   * @param defaultValue - optional default value if parse fails.
    */
   boolean: ReturnType<typeof booleanConfig>;
 
   /**
    * Date decoder.
+   *
+   * Convert an ISO date string to a date.
+   *
+   * @param defaultValue - optional default value if parse fails.
    */
   date: ReturnType<typeof dateConfig>;
 
   /**
-   * Decoder factory for literal types. Using a factory so we
-   * can provide the expected literal / type.
+   * Literal value decoder.
+   *
+   * Decodes a literal value from a raw value.
+   * Valid types can be boolean, number, or string.
+   *
+   * @param literalValue - literal value.
+   * @param defaultValue - optional default value if parse fails.
    */
   literalOf: ReturnType<typeof literalOfConfig>;
 
   /**
    * Number decoder.
+   *
+   * Decodes number and numeric strings to number values.
+   *
+   * @param defaultValue - optional default value if parse fails.
    */
   number: ReturnType<typeof numberConfig>;
 
@@ -222,11 +261,19 @@ interface Decode {
 
   /**
    * String decoder.
+   *
+   * Decodes raw values into strings. Valid raw data types
+   * that will be considered strings are boolean, number, and string.
+   *
+   * @param defaultValue - optional default value if parse fails.
    */
   string: ReturnType<typeof stringConfig>;
 
   /**
    * Configure a new set of decoder functions.
+   *
+   * @param config - configuration for new decoder set.
+   * @returns new decoder set.
    */
   config: typeof configure;
 

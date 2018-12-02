@@ -4,7 +4,7 @@ const DecodeBase = Decode;
 
 describe('Decode', () => {
   const errorTracker = jest.fn();
-
+Decode.literalOf
   beforeEach(() => {
     errorTracker.mockClear();
   });
