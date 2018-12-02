@@ -216,6 +216,8 @@ Decode.literalOf
         bbb: ['BBB', stringDecoderSpy],
       }, undefined);
 
+      const invalids = [1, true, 'aaa'];
+
       beforeEach(() => {
         numberDecoderSpy.mockClear();
         stringDecoderSpy.mockClear();
@@ -263,37 +265,54 @@ Decode.literalOf
         expect(stringDecoderSpy).toHaveBeenCalledWith(raw.BBB);
       });
 
-      describe('string', () => {
-        const decoder: Decode.Decoder<string> = Decode.string();
-        const decoderWithDefault: Decode.Decoder<string | undefined> = Decode.string(undefined);
+      it('should throw an error if raw is not an object', () => {
+        invalids.forEach(invalid => {
+          const expected = `Object Decoder: Expected raw value to be an object but got: ${invalid}.`;
+          expect(() => decoder(invalid)).toThrow(expected);
+          if(customConfig) {
+            expect(errorTracker).toHaveBeenCalledWith(expected);
+          }
+        });
+      });
 
-        const valids = [1, 2, 3, '1', '2', '3', 'a', 'b', 'c'];
-        const invalids = [new Date(), {}, null, undefined];
+      it('should return given default if raw is not an object', () => {
+        invalids.forEach(invalid => {
+          const result = decoderWithDefault(invalid);
+          expect(result).toBeUndefined();
+        });
+      });
+    });
 
-        [decoder, decoderWithDefault].forEach(decode => {
-          it('should decode strings', () => {
-            valids.forEach(raw => {
-              const result = decode(raw);
-              expect(result).toStrictEqual(String(raw));
-            });
+    describe('string', () => {
+      const decoder: Decode.Decoder<string> = Decode.string();
+      const decoderWithDefault: Decode.Decoder<string | undefined> = Decode.string(undefined);
+
+      const valids = [1, 2, 3, '1', '2', '3', 'a', 'b', 'c'];
+      const invalids = [new Date(), {}, null, undefined];
+
+      [decoder, decoderWithDefault].forEach(decode => {
+        it('should decode strings', () => {
+          valids.forEach(raw => {
+            const result = decode(raw);
+            expect(result).toStrictEqual(String(raw));
           });
         });
+      });
 
-        it('should throw an error if raw is not a string', () => {
-          invalids.forEach(invalid => {
-            const expected = `String Decoder: Expected raw value to be a string but got: ${invalid}.`;
-            expect(() => decoder(invalid)).toThrow(expected);
-            if(customConfig) {
-              expect(errorTracker).toHaveBeenCalledWith(expected);
-            }
-          });
+      it('should throw an error if raw is not a string', () => {
+        invalids.forEach(invalid => {
+          const expected = `String Decoder: Expected raw value to be a string but got: ${invalid}.`;
+          expect(() => decoder(invalid)).toThrow(expected);
+          if(customConfig) {
+            expect(errorTracker).toHaveBeenCalledWith(expected);
+          }
         });
+      });
 
-        it('should return given default if raw is not a string', () => {
-          invalids.forEach(invalid => {
-            const result = decoderWithDefault(invalid);
-            expect(result).toBeUndefined();
-          });
+      it('should return given default if raw is not a string', () => {
+        invalids.forEach(invalid => {
+          const result = decoderWithDefault(invalid);
+          expect(result).toBeUndefined();
         });
       });
     });

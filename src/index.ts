@@ -141,7 +141,15 @@ function objectConfig(config: Decode.Config) {
   function object<T, K extends string>(map: { [P in keyof T]: [K, Decode.Decoder<T[P]>] }): Decode.Decoder<T>;
   function object<T, K extends string, D>(map: { [P in keyof T]: [K, Decode.Decoder<T[P]>] }, defaultValue: D): Decode.Decoder<T | D>;
   function object<T, K extends string, D>(map: { [P in keyof T]: [K, Decode.Decoder<T[P]>] }, defaultValue?: D) {
-    return (raw: any): T => {
+    const hasDefault = arguments.length === 2;
+    return function decodeObject(raw: any) {
+      if (typeof raw !== 'object') {
+        if (!hasDefault) {
+          config.errorCallback(new Error(errorFmt('Object', 'an object', raw)));
+        }
+        return defaultValue;
+      }
+
       return Object.keys(map).reduce(
         (acc: any, key: string) => {
           const [rawKey, decoder] = map[key as keyof T];
