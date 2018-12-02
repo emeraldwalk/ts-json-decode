@@ -124,10 +124,6 @@ function numberConfig(config: Decode.Config) {
   });
 }
 
-// function array<T>(decoder: Decode.Decoder<T>): Decode.Decoder<Array<T>>;
-// function array<T, D>(decoder: Decode.Decoder<T>, defaultValue: D): Decode.Decoder<Array<T> | D>;
-// function array<T, D>(decoder: Decode.Decoder<T>, defaultValue?: Array<T> | D) {
-
 function objectConfig(config: Decode.Config) {
   function object<T, K extends string>(map: { [P in keyof T]: [K, Decode.Decoder<T[P]>] }): Decode.Decoder<T>;
   function object<T, K extends string, D>(map: { [P in keyof T]: [K, Decode.Decoder<T[P]>] }, defaultValue: D): Decode.Decoder<T | D>;
@@ -149,10 +145,12 @@ function objectConfig(config: Decode.Config) {
   return object;
 }
 
-function stringConfig(config: Decode.Config): Decode.Decoder<string> {
-  return function string(raw: any): string {
-    return String(raw);
-  };
+function stringConfig(config: Decode.Config) {
+  return createDecoderConfig(config)({
+    errorMsg: raw => `String Decoder: Expected raw value to be a string but got: ${raw}.`,
+    isValid: raw => ['boolean', 'number', 'string'].indexOf(typeof raw) > -1,
+    parse: raw => String(raw),
+  });
 }
 
 /**
@@ -179,6 +177,7 @@ function configure(
   };
 }
 
+// Namespace to allow exporting public types.
 namespace Decode {
   export interface Decoder<T> {
     (raw: any): T;
@@ -237,6 +236,9 @@ interface Decode {
   createDecoder: ReturnType<typeof createDecoderConfig>;
 }
 
+/**
+ * JSON decoders.
+ */
 const Decode = configure();
 
 export = Decode;
