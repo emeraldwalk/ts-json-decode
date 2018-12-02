@@ -1,17 +1,23 @@
 {
   "name": "@emeraldwalk/ts-json-decode",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "TypeScript JSON decoders inspired by Elm.",
+  "files": [
+    "lib/**/*"
+  ],
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
     "lint": "tslint -p tsconfig.json",
+    "prepare" : "npm run build",
+    "prepublishOnly" : "npm test && npm run lint",
     "test": "jest"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Emeraldwalk",
+  "license": "MIT",
   "devDependencies": {
     "@types/jest": "^23.3.10",
     "jest": "^23.6.0",
