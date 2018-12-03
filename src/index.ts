@@ -1,10 +1,9 @@
 /**
- * Create an Error object for when decoding fails.
+ * Default error string formatter.
+ * @param decoderType
+ * @param expected
+ * @param raw
  */
-function error2(decoderType: string, expect: string, raw: any) {
-  return new Error(`${decoderType} Decoder: Expected raw value to be ${expect} but got: ${raw}.`);
-}
-
 function errorFmt(decoderType: string, expected: string, raw: any) {
   return `${decoderType} Decoder: Expected raw value to be ${expected} but got: ${raw}.`;
 }
@@ -166,12 +165,51 @@ function objectConfig(config: Decode.Config) {
   return object;
 }
 
+/**
+ * Creates a pipeline of decoders.
+ * @param decoder first decoder
+ * @param decoders additional decoders
+ */
+function pipe<
+  D1 extends Decode.Decoder<any>,
+  DN extends Array<Decode.Decoder<any>>,
+  R extends
+    DN extends [] ? D1 :
+    DN extends [any] ? DN[0] :
+    DN extends [any, any] ? DN[1] :
+    DN extends [any, any, any] ? DN[2] :
+    DN extends [any, any, any, any] ? DN[3] :
+    DN extends [any, any, any, any, any] ? DN[4] :
+    Decode.Decoder<any> // Doubtful we'd ever want to pipe this many decoders, but in the off chance someone does, fallback to an any decoder
+>(decoder: D1, ...decoders: DN): R {
+  const allDecoders = [decoder, ...decoders];
+  return function decode(raw: any) {
+    return allDecoders.reduce((memo, decoder) => decoder(memo), raw);
+  } as R
+}
+
 function stringConfig(config: Decode.Config) {
   return createDecoderConfig(config)({
     errorMsg: raw => errorFmt('String', 'a string', raw),
     isValid: raw => ['boolean', 'number', 'string'].indexOf(typeof raw) > -1,
     parse: raw => String(raw),
   });
+}
+
+/**
+ * Pass through decoder that only sets the type without
+ * changing the raw value. Useful for nominal typing scenarios.
+ *
+ * e.g.
+ * type ID = string & { __tag__: 'ID' }; // nominal type
+ * const idDecoder = type<ID>();
+ *
+ * const result = idDecoder('999'); // typed as ID
+ */
+function type<T>() {
+  return function decoder(raw: any): T {
+    return raw;
+  }
 }
 
 /**
@@ -192,9 +230,11 @@ function configure(
     number: numberConfig(config),
     object: objectConfig(config),
     string: stringConfig(config),
+    type,
 
     config: configure,
     createDecoder: createDecoderConfig(config),
+    pipe
   };
 }
 
@@ -278,6 +318,18 @@ interface Decode {
   string: ReturnType<typeof stringConfig>;
 
   /**
+   * Pass through decoder that only sets the type without
+   * changing the raw value. Useful for nominal typing scenarios.
+   *
+   * e.g.
+   * type ID = string & { __tag__: 'ID' }; // nominal type
+   * const idDecoder = type<ID>();
+   *
+   * const result = idDecoder('999'); // typed as ID
+   */
+  type: typeof type;
+
+  /**
    * Configure a new set of decoder functions.
    *
    * @param config - configuration for new decoder set.
@@ -289,6 +341,13 @@ interface Decode {
    * Create a new decoder.
    */
   createDecoder: ReturnType<typeof createDecoderConfig>;
+
+  /**
+   * Creates a pipeline of decoders.
+   * @param decoder first decoder
+   * @param decoders additional decoders
+   */
+  pipe: typeof pipe;
 }
 
 /**

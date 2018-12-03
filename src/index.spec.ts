@@ -283,6 +283,40 @@ describe('Decode', () => {
       });
     });
 
+    describe('pipe', () => {
+      it('should pipe data through each decoder', () => {
+        const results = [{}, {}, {}];
+
+        const one = jest.fn<{}>().mockReturnValue(results[0]);
+        const two = jest.fn<{}>().mockReturnValue(results[1]);
+        const three = jest.fn<{}>().mockReturnValue(results[2]);
+
+        const decoder = Decode.pipe(
+          one,
+          two,
+          three
+        );
+
+        const raw = {};
+        const finalResult = decoder(raw);
+
+        expect(one).toHaveBeenCalledWith(raw);
+        expect(two.mock.calls[0][0]).toBe(results[0]);
+        expect(three.mock.calls[0][0]).toBe(results[1]);
+        expect(finalResult).toBe(results[2]);
+      });
+
+      it('should create a decoder matching type of last decoder', () => {
+        const decoder1: Decode.Decoder<number> = Decode.pipe(Decode.number());
+        const decoder2: Decode.Decoder<string> = Decode.pipe(Decode.number(), Decode.string());
+        const decoder3: Decode.Decoder<Date> = Decode.pipe(Decode.number(), Decode.string(), Decode.date());
+        const decoder4: Decode.Decoder<10> = Decode.pipe(Decode.number(), Decode.string(), Decode.date(), Decode.literalOf(10));
+        const decoder5: Decode.Decoder<RegExp> = Decode.pipe(Decode.number(), Decode.string(), Decode.date(), Decode.literalOf(10), Decode.type<RegExp>());
+        const decoder6: Decode.Decoder<999> = Decode.pipe(Decode.number(), Decode.string(), Decode.date(), Decode.literalOf(10), Decode.type<RegExp>(), Decode.literalOf(999));
+        const decoder7: Decode.Decoder<any> = Decode.pipe(Decode.number(), Decode.string(), Decode.date(), Decode.literalOf(10), Decode.type<RegExp>(), Decode.literalOf(999), Decode.number());
+      });
+    });
+
     describe('string', () => {
       const decoder: Decode.Decoder<string> = Decode.string();
       const decoderWithDefault: Decode.Decoder<string | undefined> = Decode.string(undefined);
@@ -313,6 +347,19 @@ describe('Decode', () => {
         invalids.forEach(invalid => {
           const result = decoderWithDefault(invalid);
           expect(result).toBeUndefined();
+        });
+      });
+    });
+
+    describe('type', () => {
+      type ID = string & { __label__: 'ID' };
+      const decoder = Decode.type<ID>();
+
+      it('should pass through raw value', () => {
+        const raws = [1, '1', 'test', new Date()];
+        raws.forEach(raw => {
+          const id: ID = decoder(raw);
+          expect(id).toStrictEqual(raw);
         });
       });
     });
