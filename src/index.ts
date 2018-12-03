@@ -234,6 +234,7 @@ function configure(
 
     config: configure,
     createDecoder: createDecoderConfig(config),
+    errorFmt,
     pipe
   };
 }
@@ -341,6 +342,11 @@ interface Decode {
    * Create a new decoder.
    */
   createDecoder: ReturnType<typeof createDecoderConfig>;
+
+  /**
+   * Default error formatting function.
+   */
+  errorFmt: typeof errorFmt;
 
   /**
    * Creates a pipeline of decoders.

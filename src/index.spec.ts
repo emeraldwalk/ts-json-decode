@@ -363,5 +363,45 @@ describe('Decode', () => {
         });
       });
     });
+
+    describe('createDecoder', () => {
+      const strictNumber = Decode.createDecoder({
+        errorMsg: raw => Decode.errorFmt('Custom', 'a strict number', raw),
+        isValid: raw => typeof raw === 'number',
+        parse: raw => Number(raw)
+      });
+
+      const decoder: Decode.Decoder<number> = strictNumber();
+      const decoderWithDefault: Decode.Decoder<number | undefined> = strictNumber(undefined);
+
+      const valids = [1, 2, 3];
+      const invalids = ['1', '2', '3'];
+
+      [decoder, decoderWithDefault].forEach(decode => {
+        it('should decode numbers', () => {
+          valids.forEach(raw => {
+            const result = decode(raw);
+            expect(result).toStrictEqual(Number(raw));
+          });
+        });
+      });
+
+      it('should throw an error if raw is not numeric', () => {
+        invalids.forEach(invalid => {
+          const expected = `Custom Decoder: Expected raw value to be a strict number but got: ${invalid}.`;
+          expect(() => decoder(invalid)).toThrow(expected);
+          if(customConfig) {
+            expect(errorTracker).toHaveBeenCalledWith(expected);
+          }
+        });
+      });
+
+      it('should return given default if raw is not numeric', () => {
+        invalids.forEach(invalid => {
+          const result = decoderWithDefault(invalid);
+          expect(result).toBeUndefined();
+        });
+      });
+    });
   });
 });

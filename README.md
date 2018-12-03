@@ -221,7 +221,31 @@ const result = numberDecoder('not a number'); // logs error to console
   ```
 
 ## Custom Decoders
-### Piping Data
+### Creating New Decoders
+The `createDecoder` function can be used to create a new decoder. It takes an options object with the following properties:
+* errorMsg - function for creating an error message from the raw value if decoding fails.
+* isValid - function that determines whether a raw value is valid or not.
+* parse - transformation function that will be run on raw data to produce decoder output. The return type will also determine what the `T` type is of the `Decode.Decoder<T>` created by the function.
+  ```
+  // Configure a custom number decoder factory that only allows numbers as raw data
+  const strictNumber = Decode.createDecoder({
+    errorMsg: raw => Decode.errorFmt('Custom', 'a strict number', raw),
+    isValid: raw => typeof raw === 'number',
+    parse: raw => Number(raw)
+  });
+
+  const decoder: Decode.Decoder<number> = strictNumber();
+
+  decoder(999); // yields 999
+  decoder('999'); // throws an error
+
+  const decoderWithDefault: Decode.Decoder<number | undefined> = strictNumber(undefined);
+
+  decoderWithDefault(999); // yields 999
+  decoderWithDefault('999'); // yields undefined
+  ```
+
+### Combining Decoders
 The `pipe` function can be used to create a new decoder that pipes data through multiple decoders.
 
   ```
@@ -235,5 +259,3 @@ The `pipe` function can be used to create a new decoder that pipes data through 
 
   decoder('999'); // yields ID type with value 999
   ```
-### Creating
-TODO
