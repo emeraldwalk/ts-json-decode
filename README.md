@@ -1,4 +1,4 @@
-# ts-json-decode
+# ts-json-decode [![Build Status](https://travis-ci.com/emeraldwalk/ts-json-decode.svg?branch=master)](https://travis-ci.com/emeraldwalk/ts-json-decode)
 TypeScript JSON decoders inspired by Elm. Provides type-safe JSON decoding and validation. Useful for enforcing data contracts coming from backend data into a front-end code base written in TypeScript.
 
 The decoders in this library serve 2 primary purposes:
