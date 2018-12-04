@@ -32,7 +32,7 @@ describe('Decode', () => {
         const given = [1, 2, 3];
         const result = decode(given);
 
-        expect(mockItemDecoder).toHaveBeenNthCalledWith(1, 1, 0, given);
+        expect(mockItemDecoder).toHaveBeenNthCalledWith(1, 1);
         expect(result).toEqual(['a', 'a', 'a']);
       });
 
@@ -40,7 +40,7 @@ describe('Decode', () => {
         const given = [1, 2, 3];
         const result = decodeWithDefault(given);
 
-        expect(mockItemDecoder).toHaveBeenNthCalledWith(1, 1, 0, given);
+        expect(mockItemDecoder).toHaveBeenNthCalledWith(1, 1);
         expect(result).toEqual(['a', 'a', 'a']);
       });
 
@@ -48,6 +48,16 @@ describe('Decode', () => {
         const given = 'invalid';
         const expected = `Array Decoder: Expected raw value to be an array but got: ${given}.`;
         expect(() => decode(given)).toThrow(expected);
+        if(customConfig) {
+          expect(errorTracker).toHaveBeenCalledWith(expected);
+        }
+      });
+
+      it('should throw an error if item decoder throws an error', () => {
+        const decoder = Decode.array(Decode.number());
+        const given = ['b'];
+        const expected = `Array Decoder: Item '0' failed with: \"Error: Number Decoder: Expected raw value to be a number but got: ${given[0]}.\"`;
+        expect(() => decoder(given)).toThrow(expected);
         if(customConfig) {
           expect(errorTracker).toHaveBeenCalledWith(expected);
         }
@@ -217,6 +227,10 @@ describe('Decode', () => {
       }, undefined);
 
       const invalids = [1, true, 'aaa'];
+      const invalidProperties = [
+        { 'AAA': new Date() },
+        { 'AAA': 'not a number' }
+      ];
 
       beforeEach(() => {
         numberDecoderSpy.mockClear();
@@ -268,6 +282,16 @@ describe('Decode', () => {
       it('should throw an error if raw is not an object', () => {
         invalids.forEach(invalid => {
           const expected = `Object Decoder: Expected raw value to be an object but got: ${invalid}.`;
+          expect(() => decoder(invalid)).toThrow(expected);
+          if(customConfig) {
+            expect(errorTracker).toHaveBeenCalledWith(expected);
+          }
+        });
+      });
+
+      it('should throw an error if property decoder fails', () => {
+        invalidProperties.forEach(invalid => {
+          const expected = `Object Decoder: Property 'aaa' failed with: "Error: Number Decoder: Expected raw value to be a number but got: ${invalid.AAA}."`;
           expect(() => decoder(invalid)).toThrow(expected);
           if(customConfig) {
             expect(errorTracker).toHaveBeenCalledWith(expected);

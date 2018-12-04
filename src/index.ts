@@ -32,7 +32,15 @@ function arrayConfig(config: Decode.Config) {
         return defaultValue;
       }
 
-      return raw.map(decoder);
+      return raw.map((item, i) => {
+        try {
+          return decoder(item);
+        }
+        catch(e) {
+          // NOTE: this won't actually get hit if default errorHandler is overridden and doesn't throw
+          config.errorCallback(new Error(`Array Decoder: Item '${i}' failed with: "${String(e)}"`))
+        }
+      });
     };
   }
 
@@ -152,10 +160,18 @@ function objectConfig(config: Decode.Config) {
       return Object.keys(map).reduce(
         (acc: any, key: string) => {
           const [rawKey, decoder] = map[key as keyof T];
-          return {
-            ...acc,
-            [key]: decoder(raw[rawKey]),
-          };
+          let decoded;
+          try {
+            decoded = decoder(raw[rawKey]);
+            return {
+              ...acc,
+              [key]: decoded,
+            };
+          }
+          catch(e) {
+            // NOTE: this won't actually get hit if default errorHandler is overridden and doesn't throw
+            config.errorCallback(new Error(`Object Decoder: Property '${key}' failed with: "${String(e)}"`))
+          }
         },
         {} as T,
       );
