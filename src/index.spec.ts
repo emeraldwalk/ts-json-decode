@@ -112,7 +112,7 @@ describe('Decode', () => {
         it('should decode iso date strings to Dates', () => {
           const dates = ['2018-02-15'];
           const times = [' 00:00:00', 'T00:00:00'];
-          const suffixes = ['', 'Z'];
+          const suffixes = ['', 'Z', '.123', '.123Z'];
 
           const expected = new Date(2018, 1, 15);
 

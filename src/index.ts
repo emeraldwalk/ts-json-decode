@@ -91,7 +91,7 @@ function booleanConfig(config: Decode.Config) {
 }
 
 function dateConfig(config: Decode.Config) {
-  const isoDateStr = /^(\d{4})-(\d{2})-(\d{2})([ T](\d{2}:\d{2}:\d{2}Z?)?)?$/;
+  const isoDateStr = /^(\d{4})-(\d{2})-(\d{2})([ T](\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?)?$/;
   return createDecoderConfig(config)({
     errorMsg: raw => errorFmt('Date', 'an ISO date string', raw),
     isValid: raw => isoDateStr.test(raw),
