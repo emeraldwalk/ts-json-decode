@@ -170,7 +170,7 @@ function objectConfig(config: Decode.Config) {
           }
           catch(e) {
             // NOTE: this won't actually get hit if default errorHandler is overridden and doesn't throw
-            config.errorCallback(new Error(`Object Decoder: Property '${key}' failed with: "${String(e)}"`))
+            config.errorCallback(new Error(`Object Decoder: Attempted to decode property '${key}' from raw key '${rawKey}' but failed with: "${String(e)}"`))
           }
         },
         {} as T,

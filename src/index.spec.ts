@@ -291,7 +291,7 @@ describe('Decode', () => {
 
       it('should throw an error if property decoder fails', () => {
         invalidProperties.forEach(invalid => {
-          const expected = `Object Decoder: Property 'aaa' failed with: "Error: Number Decoder: Expected raw value to be a number but got: ${invalid.AAA}."`;
+          const expected = `Object Decoder: Attempted to decode property 'aaa' from raw key 'AAA' but failed with: "Error: Number Decoder: Expected raw value to be a number but got: ${invalid.AAA}."`;
           expect(() => decoder(invalid)).toThrow(expected);
           if(customConfig) {
             expect(errorTracker).toHaveBeenCalledWith(expected);
