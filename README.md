@@ -13,7 +13,7 @@ const data2: nuber = numberDecoder('not a number'); // this will throw a runtime
 2. Transform data between 2 differing data models.
 
 ```
-import * as Decode from '@emeraldwalk/ts-json-decode';
+import * as Decode from '@tsutil/json-decode';
 
 // Back-end data model
 interface RawUser {
@@ -49,10 +49,8 @@ const user = userDecoder(rawUser);
 
 ## Installation
 ```
-npm install --save git+https://git@github.com/emeraldwalk/ts-json-decode.git
+npm install --save @tsutil/json-decode
 ```
-
-> TODO: Update once published to npm.
 
 ## Example Usage
 ### Decoders
@@ -62,7 +60,7 @@ By default decoders are strict and pass any invalid raw data to the configured e
 
 #### Importing Decoders
 ```
-import * as Decode from '@emeraldwalk/ts-json-decode';
+import * as Decode from '@tsutil/json-decode';
 ```
 
 #### Valid Values
@@ -109,7 +107,7 @@ The default decoder configuration will throw errors when a decoder is passed inv
 
 e.g. To log error to console instead of throwing an error:
 ```
-import * as Decode from '@emeraldwalk/ts-json-decode';
+import * as Decode from '@tsutil/json-decode';
 
 const decode = Decode.configure({
   errorCallback: (error: Error) => {

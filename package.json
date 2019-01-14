@@ -1,6 +1,6 @@
 {
   "name": "@tsutil/json-decode",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "TypeScript JSON decoders inspired by Elm.",
   "files": [
     "lib/**/*"
@@ -15,7 +15,7 @@
     "prepublishOnly": "npm test",
     "test": "jest"
   },
-  "keywords": [],
+  "keywords": ["typescript"],
   "author": "Emeraldwalk",
   "license": "MIT",
   "devDependencies": {
