@@ -1,5 +1,5 @@
 {
-  "name": "@emeraldwalk/ts-json-decode",
+  "name": "@tsutil/json-decode",
   "version": "1.0.2",
   "description": "TypeScript JSON decoders inspired by Elm.",
   "files": [
