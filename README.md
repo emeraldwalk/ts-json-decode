@@ -1,10 +1,10 @@
-# ts-json-decode [![Build Status](https://travis-ci.com/emeraldwalk/ts-json-decode.svg?branch=master)](https://travis-ci.com/emeraldwalk/ts-json-decode)
+# @tsutil/json-decode [![Build Status](https://travis-ci.com/emeraldwalk/ts-json-decode.svg?branch=master)](https://travis-ci.com/emeraldwalk/ts-json-decode)
 TypeScript JSON decoders inspired by Elm. Provides type-safe JSON decoding and validation. Useful for enforcing data contracts coming from backend data into a front-end code base written in TypeScript.
 
 The decoders in this library serve 2 primary purposes:
 
 1. Validate data before it gets assigned to type-safe data models.
-```
+```typescript
 const numberDecoder = Decode.number();
 const data: number = numberDecoder('2'); // this will succeed
 const data2: nuber = numberDecoder('not a number'); // this will throw a runtime error
@@ -12,7 +12,7 @@ const data2: nuber = numberDecoder('not a number'); // this will throw a runtime
 
 2. Transform data between 2 differing data models.
 
-```
+```typescript
 import * as Decode from '@tsutil/json-decode';
 
 // Back-end data model
@@ -48,7 +48,7 @@ const user = userDecoder(rawUser);
 ```
 
 ## Installation
-```
+```bash
 npm install --save @tsutil/json-decode
 ```
 
@@ -59,12 +59,12 @@ By default decoders are strict and pass any invalid raw data to the configured e
 > NOTE: The default error handler will throw an Error if no [default value](#Decoders%20with%20Default%20Values) is provided, but [custom handlers](#Configuration) can be configured as well.
 
 #### Importing Decoders
-```
+```typescript
 import * as Decode from '@tsutil/json-decode';
 ```
 
 #### Valid Values
-```
+```typescript
 const booleanDecoder = Decode.boolean();
 booleanDecoder('true'); // returns true
 
@@ -76,7 +76,7 @@ numberDecoder('4'); // returns 4
 ```
 
 #### Invalid values
-```
+```typescript
 const booleanDecoder = Decode.boolean();
 booleanDecoder('invalid'); // throws an Error
 
@@ -91,7 +91,7 @@ numberDecoder('invalid'); // throws an Error
 Decoders can optionally be configured with a default value. If so, the default will be returned when there is a parsing error instead of calling the errorHandler.
 
 #### Decoders using undefined as default value
-```
+```typescript
 const booleanDecoder = Decode.boolean(undefined);
 booleanDecoder('invalid'); // returns undefined
 
@@ -106,7 +106,7 @@ numberDecoder('invalid'); // returns undefined
 The default decoder configuration will throw errors when a decoder is passed invalid raw data. This behavior can be overridden.
 
 e.g. To log error to console instead of throwing an error:
-```
+```typescript
 import * as Decode from '@tsutil/json-decode';
 
 const decode = Decode.configure({
@@ -122,7 +122,7 @@ const result = numberDecoder('not a number'); // logs error to console
 ## Core Decoders
 * **array** - converts a raw array into a strong typed array. Takes an item decoder as an argument to decode each item in the array.
 
-  ```
+  ```typescript
   const decoder = Decode.array(Decode.number());
   decoder(['1', '2', '3']); // yields [1, 2, 3]
   decoder({}); // throws an error
@@ -130,7 +130,7 @@ const result = numberDecoder('not a number'); // logs error to console
 
 * **boolean** - parses "booleanish" data into boolean values
 
-  ```
+  ```typescript
   const decoder = Decode.boolean();
 
   // these will all yield true
@@ -150,7 +150,7 @@ const result = numberDecoder('not a number'); // logs error to console
   ```
 
 * **date** - converts an ISO date string into a `Date` object.
-  ```
+  ```typescript
   const decoder = Decode.date();
 
   // These will all yield Date objects
@@ -164,20 +164,20 @@ const result = numberDecoder('not a number'); // logs error to console
   decoder('2018-1215');
 * **literalOf** - validates that a value is an exact match for a configured liteal value. Valid types can be boolean, number, or string.
 
-  ```
+  ```typescript
   const decoder = Decode.literalOf(999);
 
   decoder(999); // yields 999
   decoder(888); // throws an error
 * **number** - converts a numeric string to a number.
-  ```
+  ```typescript
   const decoder = Decode.number();
 
   decoder(999); // yields 999
   decoder('999'); // also yields 999
   decoder('not number'); // throws an error
 * **object** - converts an object to another object. Each property is mapped based on a configured decoder.
-  ```
+  ```typescript
   const decoder = Decode.object({
     first: ['FIRST', Decode.string()],
     last: ['LAST', Decode.string()],
@@ -197,7 +197,7 @@ const result = numberDecoder('not a number'); // logs error to console
   });
   ```
 * **string** - stringifies boolean, number, and string values.
-  ```
+  ```typescript
   const decoder = Decode.string();
 
   decoder(true); // yields 'true'
@@ -211,7 +211,7 @@ const result = numberDecoder('not a number'); // logs error to console
   ```
 * **type** - pass-through decoder that only sets the type without changing the raw value. Useful for nominal typing scenarios.
 
-  ```
+  ```typescript
   type ID = string & { __tag__: 'ID' }; // nominal type
   const idDecoder = type<ID>();
 
@@ -224,7 +224,7 @@ The `createDecoder` function can be used to create a new decoder. It takes an op
 * errorMsg - function for creating an error message from the raw value if decoding fails.
 * isValid - function that determines whether a raw value is valid or not.
 * parse - transformation function that will be run on raw data to produce decoder output. The return type will also determine what the `T` type is of the `Decode.Decoder<T>` created by the function.
-  ```
+  ```typescript
   // Configure a custom number decoder factory that only allows numbers as raw data
   const strictNumber = Decode.createDecoder({
     errorMsg: raw => Decode.errorFmt('Custom', 'a strict number', raw),
@@ -246,7 +246,7 @@ The `createDecoder` function can be used to create a new decoder. It takes an op
 ### Combining Decoders
 The `pipe` function can be used to create a new decoder that pipes data through multiple decoders.
 
-  ```
+  ```typescript
   // nominal type based on number
   type ID = number & { __tag__: 'ID' };
 
