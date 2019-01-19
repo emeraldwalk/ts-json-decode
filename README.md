@@ -1,51 +1,51 @@
-# @tsutil/json-decode [![Build Status](https://travis-ci.com/emeraldwalk/ts-json-decode.svg?branch=master)](https://travis-ci.com/emeraldwalk/ts-json-decode)
+# @tsutil/json-decode [![Build Status](https://travis-ci.com/emeraldwalk/tsutil-json-decode.svg?branch=master)](https://travis-ci.com/emeraldwalk/tsutil-json-decode)
 TypeScript JSON decoders inspired by Elm. Provides type-safe JSON decoding and validation. Useful for enforcing data contracts coming from backend data into a front-end code base written in TypeScript.
 
 The decoders in this library serve 2 primary purposes:
 
 1. Validate data before it gets assigned to type-safe data models.
-```typescript
-const numberDecoder = Decode.number();
-const data: number = numberDecoder('2'); // this will succeed
-const data2: nuber = numberDecoder('not a number'); // this will throw a runtime error
-```
+    ```typescript
+    const numberDecoder = Decode.number();
+    const data: number = numberDecoder('2'); // this will succeed
+    const data2: number = numberDecoder('not a number'); // this will throw a runtime error
+    ```
 
 2. Transform data between 2 differing data models.
 
-```typescript
-import * as Decode from '@tsutil/json-decode';
+    ```typescript
+    import * as Decode from '@tsutil/json-decode';
 
-// Back-end data model
-interface RawUser {
-  FIRST_NAME: string,
-  LAST_NAME: string,
-  AGE: string
-}
+    // Back-end data model
+    interface RawUser {
+      FIRST_NAME: string,
+      LAST_NAME: string,
+      AGE: string
+    }
 
-// Front-end data model
-interface User {
-  first: string,
-  last: string,
-  age: number
-}
+    // Front-end data model
+    interface User {
+      first: string,
+      last: string,
+      age: number
+    }
 
-// Sample backend data
-const rawUser: RawUser = {
-  FIRST_NAME: 'Jane',
-  LAST_NAME: 'Doe',
-  AGE: '33'
-};
+    // Sample backend data
+    const rawUser: RawUser = {
+      FIRST_NAME: 'Jane',
+      LAST_NAME: 'Doe',
+      AGE: '33'
+    };
 
-// Create a decoder that can transform backend data into front-end data
-const userDecoder = Decode.object({
-  first: ['FIRST_NAME', Decode.string()],
-  last: ['LAST_NAME', Decode.string()],
-  age: ['AGE', Decode.number()]
-});
+    // Create a decoder that can transform backend data into front-end data
+    const userDecoder = Decode.object({
+      first: ['FIRST_NAME', Decode.string()],
+      last: ['LAST_NAME', Decode.string()],
+      age: ['AGE', Decode.number()]
+    });
 
-// user type will be inferred as User
-const user = userDecoder(rawUser);
-```
+    // user type will be inferred as User
+    const user = userDecoder(rawUser);
+    ```
 
 ## Installation
 ```bash
@@ -122,101 +122,106 @@ const result = numberDecoder('not a number'); // logs error to console
 ## Core Decoders
 * **array** - converts a raw array into a strong typed array. Takes an item decoder as an argument to decode each item in the array.
 
-  ```typescript
-  const decoder = Decode.array(Decode.number());
-  decoder(['1', '2', '3']); // yields [1, 2, 3]
-  decoder({}); // throws an error
-  ```
+    ```typescript
+    const decoder = Decode.array(Decode.number());
+    decoder(['1', '2', '3']); // yields [1, 2, 3]
+    decoder({}); // throws an error
+    ```
 
 * **boolean** - parses "booleanish" data into boolean values
 
-  ```typescript
-  const decoder = Decode.boolean();
+    ```typescript
+    const decoder = Decode.boolean();
 
-  // these will all yield true
-  decoder('true');
-  decoder(true);
-  decoder(1);
-  decoder('1');
+    // these will all yield true
+    decoder('true');
+    decoder(true);
+    decoder(1);
+    decoder('1');
 
-  // these will all yield false
-  decoder('false');
-  decoder(false);
-  decoder(0);
-  decoder('0');
+    // these will all yield false
+    decoder('false');
+    decoder(false);
+    decoder(0);
+    decoder('0');
 
-  // throws an error
-  decoder('not a boolean');
-  ```
+    // throws an error
+    decoder('not a boolean');
+    ```
 
 * **date** - converts an ISO date string into a `Date` object.
-  ```typescript
-  const decoder = Decode.date();
+    ```typescript
+    const decoder = Decode.date();
 
-  // These will all yield Date objects
-  decoder('2018-12-15');
-  decoder('2018-12-15T00:00:00');
-  decoder('2018-12-15 00:00:00');
+    // These will all yield Date objects
+    decoder('2018-12-15');
+    decoder('2018-12-15T00:00:00');
+    decoder('2018-12-15 00:00:00');
 
-  // These will throw an error
-  decoder('20181215');
-  decoder('Not a date');
-  decoder('2018-1215');
+    // These will throw an error
+    decoder('20181215');
+    decoder('Not a date');
+    decoder('2018-1215');
+
 * **literalOf** - validates that a value is an exact match for a configured liteal value. Valid types can be boolean, number, or string.
 
-  ```typescript
-  const decoder = Decode.literalOf(999);
+    ```typescript
+    const decoder = Decode.literalOf(999);
 
-  decoder(999); // yields 999
-  decoder(888); // throws an error
+    decoder(999); // yields 999
+    decoder(888); // throws an error
+
 * **number** - converts a numeric string to a number.
-  ```typescript
-  const decoder = Decode.number();
+    ```typescript
+    const decoder = Decode.number();
 
-  decoder(999); // yields 999
-  decoder('999'); // also yields 999
-  decoder('not number'); // throws an error
+    decoder(999); // yields 999
+    decoder('999'); // also yields 999
+    decoder('not number'); // throws an error
+
 * **object** - converts an object to another object. Each property is mapped based on a configured decoder.
-  ```typescript
-  const decoder = Decode.object({
-    first: ['FIRST', Decode.string()],
-    last: ['LAST', Decode.string()],
-    age: ['AGE', Decode.number()]
-  }); // (raw: any) => { first: string, last: string, age: number }
+    ```typescript
+    const decoder = Decode.object({
+      first: ['FIRST', Decode.string()],
+      last: ['LAST', Decode.string()],
+      age: ['AGE', Decode.number()]
+    }); // (raw: any) => { first: string, last: string, age: number }
 
-  // Yields { first: 'Jane', last: 'Doe', age: 33 }
-  decoder({
-    FIRST: 'Jane',
-    LAST: 'Doe',
-    AGE: 33
-  });
+    // Yields { first: 'Jane', last: 'Doe', age: 33 }
+    decoder({
+      FIRST: 'Jane',
+      LAST: 'Doe',
+      AGE: 33
+    });
 
-  // Throws an error due to missing properties
-  decoder({
-    FIRST: 'Jane'
-  });
-  ```
+    // Throws an error due to missing properties
+    decoder({
+      FIRST: 'Jane'
+    });
+    ```
+
 * **string** - stringifies boolean, number, and string values.
-  ```typescript
-  const decoder = Decode.string();
+    ```typescript
+    const decoder = Decode.string();
 
-  decoder(true); // yields 'true'
-  decoder('test'); // yields 'test'
-  decoder(4); // yields '4'
+    decoder(true); // yields 'true'
+    decoder('test'); // yields 'test'
+    decoder(4); // yields '4'
 
-  // These will throw an Error
-  decoder({});
-  decoder([]);
-  decoder(new Date());
-  ```
+    // These will throw an Error
+    decoder({});
+    decoder([]);
+    decoder(new Date());
+    ```
+
 * **type** - pass-through decoder that only sets the type without changing the raw value. Useful for nominal typing scenarios.
 
-  ```typescript
-  type ID = string & { __tag__: 'ID' }; // nominal type
-  const idDecoder = type<ID>();
+    ```typescript
+    type ID = string & { __tag__: 'ID' }; // nominal type
+    const idDecoder = type<ID>();
 
-  idDecoder('999'); // typed as ID
-  ```
+    idDecoder('999'); // typed as ID
+    ```
 
 ## Custom Decoders
 ### Creating New Decoders
@@ -224,36 +229,37 @@ The `createDecoder` function can be used to create a new decoder. It takes an op
 * errorMsg - function for creating an error message from the raw value if decoding fails.
 * isValid - function that determines whether a raw value is valid or not.
 * parse - transformation function that will be run on raw data to produce decoder output. The return type will also determine what the `T` type is of the `Decode.Decoder<T>` created by the function.
-  ```typescript
-  // Configure a custom number decoder factory that only allows numbers as raw data
-  const strictNumber = Decode.createDecoder({
-    errorMsg: raw => Decode.errorFmt('Custom', 'a strict number', raw),
-    isValid: raw => typeof raw === 'number',
-    parse: raw => Number(raw)
-  });
 
-  const decoder: Decode.Decoder<number> = strictNumber();
+    ```typescript
+    // Configure a custom number decoder factory that only allows numbers as raw data
+    const strictNumber = Decode.createDecoder({
+      errorMsg: raw => Decode.errorFmt('Custom', 'a strict number', raw),
+      isValid: raw => typeof raw === 'number',
+      parse: raw => Number(raw)
+    });
 
-  decoder(999); // yields 999
-  decoder('999'); // throws an error
+    const decoder: Decode.Decoder<number> = strictNumber();
 
-  const decoderWithDefault: Decode.Decoder<number | undefined> = strictNumber(undefined);
+    decoder(999); // yields 999
+    decoder('999'); // throws an error
 
-  decoderWithDefault(999); // yields 999
-  decoderWithDefault('999'); // yields undefined
-  ```
+    const decoderWithDefault: Decode.Decoder<number | undefined> = strictNumber(undefined);
+
+    decoderWithDefault(999); // yields 999
+    decoderWithDefault('999'); // yields undefined
+    ```
 
 ### Combining Decoders
 The `pipe` function can be used to create a new decoder that pipes data through multiple decoders.
 
-  ```typescript
-  // nominal type based on number
-  type ID = number & { __tag__: 'ID' };
+    ```typescript
+    // nominal type based on number
+    type ID = number & { __tag__: 'ID' };
 
-  const decoder = Decode.pipe(
-    Decode.number(),
-    Decode.type<ID>()
-  );
+    const decoder = Decode.pipe(
+      Decode.number(),
+      Decode.type<ID>()
+    );
 
-  decoder('999'); // yields ID type with value 999
-  ```
+    decoder('999'); // yields ID type with value 999
+    ```
