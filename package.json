@@ -1,6 +1,6 @@
 {
   "name": "@tsutil/json-decode",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "TypeScript JSON decoders inspired by Elm.",
   "files": [
     "lib/**/*"
