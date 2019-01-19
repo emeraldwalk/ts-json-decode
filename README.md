@@ -252,14 +252,14 @@ The `createDecoder` function can be used to create a new decoder. It takes an op
 ### Combining Decoders
 The `pipe` function can be used to create a new decoder that pipes data through multiple decoders.
 
-    ```typescript
-    // nominal type based on number
-    type ID = number & { __tag__: 'ID' };
+```typescript
+// nominal type based on number
+type ID = number & { __tag__: 'ID' };
 
-    const decoder = Decode.pipe(
-      Decode.number(),
-      Decode.type<ID>()
-    );
+const decoder = Decode.pipe(
+  Decode.number(),
+  Decode.type<ID>()
+);
 
-    decoder('999'); // yields ID type with value 999
-    ```
+decoder('999'); // yields ID type with value 999
+```
