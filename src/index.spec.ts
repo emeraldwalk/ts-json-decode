@@ -114,12 +114,11 @@ describe('Decode', () => {
           const times = [' 00:00:00', 'T00:00:00'];
           const suffixes = ['', 'Z', '.123', '.123Z'];
 
-          const expected = new Date(2018, 1, 15);
-
           for (const date of dates) {
             for (const time of times) {
               for (const suffix of suffixes) {
                 const dateStr = `${date}${time}${suffix}`;
+                const expected = new Date(dateStr);
                 const result = decode(dateStr);
                 expect(result).toEqual(expected);
               }
